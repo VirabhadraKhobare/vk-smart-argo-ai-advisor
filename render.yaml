@@ -1,0 +1,31 @@
+# Render YAML - deploys server as a Web Service
+# Replace placeholder values with your actual names and secrets before using with render deploy
+services:
+  - type: web
+    name: smart-agro-ai-server
+    env: node
+    region: oregon
+    branch: main
+    plan: free
+    buildCommand: "npm install"
+    startCommand: "npm start"
+    root: server
+    envVars:
+      - key: MONGODB_URI
+        value: "${MONGODB_URI}"
+        sync: false
+      - key: JWT_SECRET
+        value: "${JWT_SECRET}"
+        sync: false
+      - key: OPENAI_API_KEY
+        value: "${OPENAI_API_KEY}"
+        sync: false
+      - key: WEATHER_API_KEY
+        value: "${WEATHER_API_KEY}"
+        sync: false
+      - key: CLIENT_URL
+        value: "${CLIENT_URL}"
+        sync: false
+      - key: NODE_ENV
+        value: "production"
+        sync: false
