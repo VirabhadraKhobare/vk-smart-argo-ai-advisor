@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="Smart Agro">
+  <defs>
+    <linearGradient id="g" x1="0%" x2="0%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#2f6b16" />
+      <stop offset="100%" stop-color="#1d4a0e" />
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded background -->
+  <rect x="6" y="6" width="116" height="116" rx="22" fill="url(#g)" />
+
+  <!-- Simple white sprout icon (professional, minimal) -->
+  <g transform="translate(0,0)" fill="#ffffff">
+    <!-- Stem -->
+    <rect x="60" y="54" width="8" height="30" rx="4" />
+    <!-- Left leaf -->
+    <path d="M64 58 C48 54 40 42 46 34 C52 26 66 30 64 46 C64 50 64 56 64 58 Z" />
+    <!-- Right leaf -->
+    <path d="M64 58 C80 54 88 42 82 34 C76 26 62 30 64 46 C64 50 64 56 64 58 Z" />
+  </g>
+
+</svg>
