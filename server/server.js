@@ -2,7 +2,9 @@
  * Smart Agro AI Advisor - Main Server
  * Express.js application with MongoDB integration
  */
+
 require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -32,87 +34,139 @@ const notificationRoutes = require('./routes/notificationRoutes');
 // Initialize Express app
 const app = express();
 
-// Connect to database
+// Connect Database
 connectDB();
 
-// Security middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https:"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:", "http:"],
-      connectSrc: ["'self'", "https:"],
-    },
-  },
-}));
+/* =========================================================
+   SECURITY MIDDLEWARE
+========================================================= */
 
-// CORS configuration - Production-safe whitelist approach
+app.use(
+  helmet({
+    contentSecurityPolicy: false
+  })
+);
+
+/* =========================================================
+   CORS CONFIGURATION
+========================================================= */
+
+// Allowed frontend URLs from .env
 const clientUrl = process.env.CLIENT_URL || '';
+
 const allowedOrigins = clientUrl
-  ? clientUrl.split(',').map(url => url.trim())
+  ? clientUrl.split(',').map((url) => url.trim())
   : [];
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow non-browser requests (server-to-server)
-    if (!origin) return callback(null, true);
-    
-    // In development or if no CLIENT_URL set, allow all
-    if (allowedOrigins.length === 0) {
-      console.log('⚠️  CORS: No CLIENT_URL configured. Allowing all origins (dev mode)');
+    // Allow requests with no origin
+    // (mobile apps, postman, server-to-server)
+    if (!origin) {
       return callback(null, true);
     }
-    
-    // Check if origin is in whitelist
+
+    // Allow localhost during development
+    if (origin.includes('localhost')) {
+      return callback(null, true);
+    }
+
+    // Allow all Vercel deployments
+    if (origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+
+    // Allow manually configured origins
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    
-    console.warn(`❌ CORS rejected origin: ${origin}`);
-    callback(new Error('Not allowed by CORS'));
+
+    console.warn(`❌ CORS Blocked Origin: ${origin}`);
+
+    return callback(null, false);
   },
+
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+
+  methods: [
+    'GET',
+    'POST',
+    'PUT',
+    'DELETE',
+    'PATCH',
+    'OPTIONS'
+  ],
+
+  allowedHeaders: [
+    'Origin',
+    'X-Requested-With',
+    'Content-Type',
+    'Accept',
+    'Authorization'
+  ],
+
   optionsSuccessStatus: 200
 };
 
+// Apply CORS
 app.use(cors(corsOptions));
-// Enable preflight for all routes
+
+// Handle preflight requests
 app.options('*', cors(corsOptions));
 
-// Rate limiting
+/* =========================================================
+   RATE LIMITER
+========================================================= */
+
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.'
+  max: 100,
+  message: {
+    success: false,
+    message: 'Too many requests from this IP. Please try again later.'
+  }
 });
+
 app.use('/api/', limiter);
 
-// Body parsing
+/* =========================================================
+   BODY PARSER
+========================================================= */
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Logging
+/* =========================================================
+   LOGGING
+========================================================= */
+
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// Static files (uploads)
+/* =========================================================
+   STATIC FILES
+========================================================= */
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Health check endpoint
+/* =========================================================
+   HEALTH CHECK
+========================================================= */
+
 app.get('/health', (req, res) => {
   res.status(200).json({
+    success: true,
     status: 'healthy',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
   });
 });
 
-// API Routes
+/* =========================================================
+   API ROUTES
+========================================================= */
+
 app.use('/api/auth', authRoutes);
 app.use('/api/crops', cropRoutes);
 app.use('/api/soil', soilRoutes);
@@ -124,10 +178,16 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/government', govRoutes);
 app.use('/api/notifications', notificationRoutes);
 
-// Upload error handler
+/* =========================================================
+   UPLOAD ERROR HANDLER
+========================================================= */
+
 app.use(handleUploadError);
 
-// 404 handler
+/* =========================================================
+   404 HANDLER
+========================================================= */
+
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -135,28 +195,53 @@ app.use((req, res) => {
   });
 });
 
-// Global error handler
+/* =========================================================
+   GLOBAL ERROR HANDLER
+========================================================= */
+
 app.use(errorHandler);
 
-// Start server
+/* =========================================================
+   START SERVER
+========================================================= */
+
 const PORT = process.env.PORT || 5000;
+
 const server = app.listen(PORT, () => {
-  console.log(`🌾 Smart Agro AI Advisor Server running on port ${PORT}`);
+  console.log('=======================================');
+  console.log(`🌾 Smart Agro AI Advisor Server Running`);
+  console.log(`🚀 Port: ${PORT}`);
   console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔐 CORS whitelist: ${allowedOrigins.length > 0 ? JSON.stringify(allowedOrigins) : 'All origins (dev mode)'}`);
+  console.log(
+    `🔐 Allowed Origins: ${
+      allowedOrigins.length > 0
+        ? allowedOrigins.join(', ')
+        : 'All Origins Allowed'
+    }`
+  );
+  console.log('=======================================');
 });
 
-// Handle unhandled promise rejections
+/* =========================================================
+   HANDLE UNCAUGHT ERRORS
+========================================================= */
+
+// Unhandled Promise Rejections
 process.on('unhandledRejection', (err) => {
-  console.error('❌ Unhandled Rejection:', err.message);
-  // Close server & exit process
-  server.close(() => process.exit(1));
+  console.error('❌ Unhandled Rejection:', err);
+
+  server.close(() => {
+    process.exit(1);
+  });
 });
 
-// Handle uncaught exceptions
+// Uncaught Exceptions
 process.on('uncaughtException', (err) => {
-  console.error('❌ Uncaught Exception:', err.message);
-  server.close(() => process.exit(1));
+  console.error('❌ Uncaught Exception:', err);
+
+  server.close(() => {
+    process.exit(1);
+  });
 });
 
 module.exports = app;
