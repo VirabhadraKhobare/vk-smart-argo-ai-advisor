@@ -2,9 +2,7 @@
  * Smart Agro AI Advisor - Main Server
  * Express.js application with MongoDB integration
  */
-
 require('dotenv').config();
-
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -13,23 +11,23 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 
 // Database connection
-const connectDB = require('./config/db');
+const connectDB = require("./config/db");
 
 // Middleware
-const errorHandler = require('./middleware/errorHandler');
-const { handleUploadError } = require('./middleware/upload');
+const errorHandler = require("./middleware/errorHandler");
+const { handleUploadError } = require("./middleware/upload");
 
 // Route imports
-const authRoutes = require('./routes/authRoutes');
-const cropRoutes = require('./routes/cropRoutes');
-const soilRoutes = require('./routes/soilRoutes');
-const weatherRoutes = require('./routes/weatherRoutes');
-const diseaseRoutes = require('./routes/diseaseRoutes');
-const yieldRoutes = require('./routes/yieldRoutes');
-const communityRoutes = require('./routes/communityRoutes');
-const chatRoutes = require('./routes/chatRoutes');
-const govRoutes = require('./routes/govRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
+const authRoutes = require("./routes/authRoutes");
+const cropRoutes = require("./routes/cropRoutes");
+const soilRoutes = require("./routes/soilRoutes");
+const weatherRoutes = require("./routes/weatherRoutes");
+const diseaseRoutes = require("./routes/diseaseRoutes");
+const yieldRoutes = require("./routes/yieldRoutes");
+const communityRoutes = require("./routes/communityRoutes");
+const chatRoutes = require("./routes/chatRoutes");
+const govRoutes = require("./routes/govRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 
 // Initialize Express app
 const app = express();
@@ -37,81 +35,54 @@ const app = express();
 // Connect Database
 connectDB();
 
-/* =========================================================
-   SECURITY MIDDLEWARE
-========================================================= */
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:", "http:"],
+      connectSrc: ["'self'", "https:"],
+    },
+  },
+}));
 
-app.use(
-  helmet({
-    contentSecurityPolicy: false
-  })
-);
-
-/* =========================================================
-   CORS CONFIGURATION
-========================================================= */
-
-// Allowed frontend URLs from .env
+// CORS configuration - Production-safe whitelist approach
 const clientUrl = process.env.CLIENT_URL || '';
-
 const allowedOrigins = clientUrl
-  ? clientUrl.split(',').map((url) => url.trim())
+  ? clientUrl.split(',').map(url => url.trim())
   : [];
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin
-    // (mobile apps, postman, server-to-server)
-    if (!origin) {
+    // Allow non-browser requests (server-to-server)
+    if (!origin) return callback(null, true);
+    
+    // In development or if no CLIENT_URL set, allow all
+    if (allowedOrigins.length === 0) {
+      console.log('⚠️  CORS: No CLIENT_URL configured. Allowing all origins (dev mode)');
       return callback(null, true);
     }
-
-    // Allow localhost during development
-    if (origin.includes('localhost')) {
-      return callback(null, true);
-    }
-
-    // Allow all Vercel deployments
-    if (origin.endsWith('.vercel.app')) {
-      return callback(null, true);
-    }
-
-    // Allow manually configured origins
+    
+    // Check if origin is in whitelist
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-
-    console.warn(`❌ CORS Blocked Origin: ${origin}`);
-
-    return callback(null, false);
+    
+    console.warn(`❌ CORS rejected origin: ${origin}`);
+    callback(new Error('Not allowed by CORS'));
   },
 
   credentials: true,
-
-  methods: [
-    'GET',
-    'POST',
-    'PUT',
-    'DELETE',
-    'PATCH',
-    'OPTIONS'
-  ],
-
-  allowedHeaders: [
-    'Origin',
-    'X-Requested-With',
-    'Content-Type',
-    'Accept',
-    'Authorization'
-  ],
-
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   optionsSuccessStatus: 200
 };
 
 // Apply CORS
 app.use(cors(corsOptions));
-
-// Handle preflight requests
+// Enable preflight for all routes
 app.options('*', cors(corsOptions));
 
 /* =========================================================
@@ -120,53 +91,33 @@ app.options('*', cors(corsOptions));
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
-  message: {
-    success: false,
-    message: 'Too many requests from this IP. Please try again later.'
-  }
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
 });
-
 app.use('/api/', limiter);
 
-/* =========================================================
-   BODY PARSER
-========================================================= */
-
+// Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-/* =========================================================
-   LOGGING
-========================================================= */
-
+// Logging
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-/* =========================================================
-   STATIC FILES
-========================================================= */
-
+// Static files (uploads)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-/* =========================================================
-   HEALTH CHECK
-========================================================= */
-
+// Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
-    success: true,
     status: 'healthy',
-    environment: process.env.NODE_ENV || 'development',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
-/* =========================================================
-   API ROUTES
-========================================================= */
-
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/crops', cropRoutes);
 app.use('/api/soil', soilRoutes);
@@ -191,7 +142,7 @@ app.use(handleUploadError);
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: `Route ${req.originalUrl} not found`
+    message: `Route ${req.originalUrl} not found`,
   });
 });
 
@@ -208,40 +159,22 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
-  console.log('=======================================');
-  console.log(`🌾 Smart Agro AI Advisor Server Running`);
-  console.log(`🚀 Port: ${PORT}`);
+  console.log(`🌾 Smart Agro AI Advisor Server running on port ${PORT}`);
   console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(
-    `🔐 Allowed Origins: ${
-      allowedOrigins.length > 0
-        ? allowedOrigins.join(', ')
-        : 'All Origins Allowed'
-    }`
-  );
-  console.log('=======================================');
+  console.log(`🔐 CORS whitelist: ${allowedOrigins.length > 0 ? JSON.stringify(allowedOrigins) : 'All origins (dev mode)'}`);
 });
 
-/* =========================================================
-   HANDLE UNCAUGHT ERRORS
-========================================================= */
-
-// Unhandled Promise Rejections
+// Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
-  console.error('❌ Unhandled Rejection:', err);
-
-  server.close(() => {
-    process.exit(1);
-  });
+  console.error('❌ Unhandled Rejection:', err.message);
+  // Close server & exit process
+  server.close(() => process.exit(1));
 });
 
-// Uncaught Exceptions
+// Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
-  console.error('❌ Uncaught Exception:', err);
-
-  server.close(() => {
-    process.exit(1);
-  });
+  console.error('❌ Uncaught Exception:', err.message);
+  server.close(() => process.exit(1));
 });
 
 module.exports = app;
