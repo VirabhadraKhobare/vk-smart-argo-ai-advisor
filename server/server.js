@@ -48,13 +48,40 @@ app.use(helmet({
   },
 }));
 
-// CORS configuration
-app.use(cors({
-  origin: process.env.CLIENT_URL || '*',
+// CORS configuration - Production-safe whitelist approach
+const clientUrl = process.env.CLIENT_URL || '';
+const allowedOrigins = clientUrl
+  ? clientUrl.split(',').map(url => url.trim())
+  : [];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow non-browser requests (server-to-server)
+    if (!origin) return callback(null, true);
+    
+    // In development or if no CLIENT_URL set, allow all
+    if (allowedOrigins.length === 0) {
+      console.log('⚠️  CORS: No CLIENT_URL configured. Allowing all origins (dev mode)');
+      return callback(null, true);
+    }
+    
+    // Check if origin is in whitelist
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    console.warn(`❌ CORS rejected origin: ${origin}`);
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+// Enable preflight for all routes
+app.options('*', cors(corsOptions));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -116,6 +143,7 @@ const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
   console.log(`🌾 Smart Agro AI Advisor Server running on port ${PORT}`);
   console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔐 CORS whitelist: ${allowedOrigins.length > 0 ? JSON.stringify(allowedOrigins) : 'All origins (dev mode)'}`);
 });
 
 // Handle unhandled promise rejections
