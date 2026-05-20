@@ -2,7 +2,7 @@
  * Weather Page
  * Weather forecast and irrigation suggestions
  */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import DashboardLayout from "../layouts/DashboardLayout";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { motion } from "framer-motion";
@@ -28,7 +28,7 @@ const Weather = () => {
   const [loading, setLoading] = useState(true);
   const [city, setCity] = useState("Pune");
 
-  const fetchWeatherData = async () => {
+  const fetchWeatherData = useCallback(async () => {
     try {
       setLoading(true);
       const [weatherRes, irrigationRes] = await Promise.all([
@@ -43,11 +43,11 @@ const Weather = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [city]);
 
   useEffect(() => {
     fetchWeatherData();
-  }, [city]);
+  }, [fetchWeatherData]);
 
   const getWeatherIcon = (condition) => {
     const icons = {
