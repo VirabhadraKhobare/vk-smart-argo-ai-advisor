@@ -49,28 +49,12 @@ app.use(helmet({
 }));
 
 // CORS configuration
-// CORS: use a dynamic whitelist so we can allow credentials safely
-const clientUrl = process.env.CLIENT_URL || '';
-const whitelist = clientUrl
-  ? clientUrl.split(',').map((s) => s.trim())
-  : [];
-
-const corsOptions = {
-  origin: (origin, callback) => {
-    // allow non-browser requests (like server-to-server) when origin is undefined
-    if (!origin) return callback(null, true);
-    // if no whitelist configured, allow all origins (useful for local/dev)
-    if (whitelist.length === 0) return callback(null, true);
-    if (whitelist.includes(origin)) return callback(null, true);
-    callback(new Error('Not allowed by CORS'));
-  },
+app.use(cors({
+  origin: process.env.CLIENT_URL || '*',
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-};
-
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Rate limiting
 const limiter = rateLimit({
