@@ -1,6 +1,7 @@
 {
   "short_name": "Smart Agro",
   "name": "Smart Agro AI Advisor",
+  "author": "Virabhadra Khobare",
   "icons": [
     {
       "src": "favicon.ico",
