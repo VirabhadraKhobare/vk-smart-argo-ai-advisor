@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import "./LanguageSelector.css";
@@ -7,10 +7,11 @@ const LanguageSelector = ({ onLanguageSelect, onSkip }) => {
   const { i18n } = useTranslation();
   const [selectedLanguage, setSelectedLanguage] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showRecommended, setShowRecommended] = useState(true);
+  const showRecommended = true;
 
   // All available languages with metadata
-  const languages = [
+  const languages = useMemo(
+    () => [
     {
       code: "en",
       name: "English",
@@ -151,7 +152,9 @@ const LanguageSelector = ({ onLanguageSelect, onSkip }) => {
       flag: "🇮🇳",
       region: "Rajasthan",
     },
-  ];
+    ],
+    [],
+  );
 
   // Get recommended language based on browser locale
   useEffect(() => {
@@ -160,7 +163,7 @@ const LanguageSelector = ({ onLanguageSelect, onSkip }) => {
     if (recommended && showRecommended) {
       setSelectedLanguage(recommended);
     }
-  }, []);
+  }, [languages, showRecommended]);
 
   // Filter languages based on search
   const filteredLanguages = languages.filter(

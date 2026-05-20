@@ -31,7 +31,7 @@ const Register = () => {
     state: "",
     district: "",
   });
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
