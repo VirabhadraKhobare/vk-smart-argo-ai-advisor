@@ -1,0 +1,29 @@
+# Root level gitignore for repository
+
+# Node
+node_modules/
+
+# Environment
+.env
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Coverage and build
+coverage/
+dist/
+build/
+
+# Misc
+.cache/
+.eslintcache
