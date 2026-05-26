@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import axios from "axios";
+import api from "../services/api";
 import "./LanguageSwitcher.css";
 
 const LanguageSwitcher = ({ compact = false, showLabel = true }) => {
@@ -48,15 +48,7 @@ const LanguageSwitcher = ({ compact = false, showLabel = true }) => {
       const token = localStorage.getItem("token");
       if (token) {
         try {
-          await axios.put(
-            "http://localhost:5000/api/auth/update-language",
-            { language: languageCode },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            },
-          );
+          await api.put("/auth/update-language", { language: languageCode });
         } catch (error) {
           console.warn(
             "Could not update language preference on server:",
