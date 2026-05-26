@@ -2,8 +2,8 @@
  * Auth Controller
  * Handles user registration, login, and profile management
  */
-const User = require('../models/User');
-const { validationResult } = require('express-validator');
+const User = require("../models/User");
+const { validationResult } = require("express-validator");
 
 // @desc    Register new user
 // @route   POST /api/auth/register
@@ -15,18 +15,27 @@ exports.register = async (req, res, next) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        errors: errors.array()
+        errors: errors.array(),
       });
     }
 
-    const { name, email, password, phone, role, location, farmSize, farmSizeUnit } = req.body;
+    const {
+      name,
+      email,
+      password,
+      phone,
+      role,
+      location,
+      farmSize,
+      farmSizeUnit,
+    } = req.body;
 
     // Check if user already exists
     const userExists = await User.findOne({ email: email.toLowerCase() });
     if (userExists) {
       return res.status(400).json({
         success: false,
-        message: 'User already exists with this email'
+        message: "User already exists with this email",
       });
     }
 
@@ -36,10 +45,10 @@ exports.register = async (req, res, next) => {
       email: email.toLowerCase(),
       password,
       phone,
-      role: role || 'farmer',
+      role: role || "farmer",
       location,
       farmSize,
-      farmSizeUnit
+      farmSizeUnit,
     });
 
     // Generate token
@@ -54,8 +63,8 @@ exports.register = async (req, res, next) => {
         email: user.email,
         role: user.role,
         location: user.location,
-        farmSize: user.farmSize
-      }
+        farmSize: user.farmSize,
+      },
     });
   } catch (error) {
     next(error);
@@ -71,18 +80,20 @@ exports.login = async (req, res, next) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        errors: errors.array()
+        errors: errors.array(),
       });
     }
 
     const { email, password } = req.body;
 
     // Check for user (include password for comparison)
-    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    const user = await User.findOne({ email: email.toLowerCase() }).select(
+      "+password",
+    );
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: "Invalid credentials",
       });
     }
 
@@ -90,7 +101,7 @@ exports.login = async (req, res, next) => {
     if (!user.isActive) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: "Invalid credentials",
       });
     }
 
@@ -99,7 +110,7 @@ exports.login = async (req, res, next) => {
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: "Invalid credentials",
       });
     }
 
@@ -121,8 +132,8 @@ exports.login = async (req, res, next) => {
         location: user.location,
         farmSize: user.farmSize,
         preferences: user.preferences,
-        lastLogin: user.lastLogin
-      }
+        lastLogin: user.lastLogin,
+      },
     });
   } catch (error) {
     next(error);
@@ -137,7 +148,7 @@ exports.getMe = async (req, res, next) => {
     const user = await User.findById(req.user.id);
     res.status(200).json({
       success: true,
-      data: user
+      data: user,
     });
   } catch (error) {
     next(error);
@@ -149,7 +160,8 @@ exports.getMe = async (req, res, next) => {
 // @access  Private
 exports.updateProfile = async (req, res, next) => {
   try {
-    const { name, phone, location, farmSize, farmSizeUnit, preferences } = req.body;
+    const { name, phone, location, farmSize, farmSizeUnit, preferences } =
+      req.body;
 
     const fieldsToUpdate = {};
     if (name) fieldsToUpdate.name = name;
@@ -159,15 +171,14 @@ exports.updateProfile = async (req, res, next) => {
     if (farmSizeUnit) fieldsToUpdate.farmSizeUnit = farmSizeUnit;
     if (preferences) fieldsToUpdate.preferences = preferences;
 
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      fieldsToUpdate,
-      { new: true, runValidators: true }
-    );
+    const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
+      new: true,
+      runValidators: true,
+    });
 
     res.status(200).json({
       success: true,
-      data: user
+      data: user,
     });
   } catch (error) {
     next(error);
@@ -181,14 +192,14 @@ exports.changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
-    const user = await User.findById(req.user.id).select('+password');
+    const user = await User.findById(req.user.id).select("+password");
 
     // Check current password
     const isMatch = await user.comparePassword(currentPassword);
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Current password is incorrect'
+        message: "Current password is incorrect",
       });
     }
 
@@ -197,7 +208,7 @@ exports.changePassword = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Password updated successfully'
+      message: "Password updated successfully",
     });
   } catch (error) {
     next(error);
@@ -213,7 +224,7 @@ exports.logout = async (req, res, next) => {
     // Here we can add token to blacklist if implementing that feature
     res.status(200).json({
       success: true,
-      message: 'Logged out successfully'
+      message: "Logged out successfully",
     });
   } catch (error) {
     next(error);

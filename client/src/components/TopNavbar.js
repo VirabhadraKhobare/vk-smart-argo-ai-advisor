@@ -20,6 +20,7 @@ import {
   RiArrowDownSLine,
 } from "react-icons/ri";
 import { Dropdown } from "react-bootstrap";
+import "./TopNavbar.css";
 
 const TopNavbar = ({ title, collapsed }) => {
   const { user, logout } = useAuth();
@@ -155,25 +156,25 @@ const TopNavbar = ({ title, collapsed }) => {
           </Dropdown.Toggle>
 
           <Dropdown.Menu
-            className="shadow-lg border-0"
+            className="shadow-lg border-0 top-navbar-dropdown"
             style={{ borderRadius: "12px", padding: "0.5rem" }}
           >
             <Dropdown.Item
               onClick={() => navigate("/settings")}
-              className="d-flex align-items-center gap-2 py-2"
+              className="d-flex align-items-center gap-2 py-2 top-navbar-dropdown-item"
             >
               <RiUserLine /> Profile
             </Dropdown.Item>
             <Dropdown.Item
               onClick={() => navigate("/settings")}
-              className="d-flex align-items-center gap-2 py-2"
+              className="d-flex align-items-center gap-2 py-2 top-navbar-dropdown-item"
             >
               <RiSettingsLine /> Settings
             </Dropdown.Item>
             <Dropdown.Divider />
             <Dropdown.Item
               onClick={handleLogout}
-              className="d-flex align-items-center gap-2 py-2 text-danger"
+              className="d-flex align-items-center gap-2 py-2 top-navbar-logout-item"
             >
               <RiLogoutBoxRLine /> Logout
             </Dropdown.Item>

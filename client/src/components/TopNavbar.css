@@ -1,0 +1,58 @@
+.top-navbar-dropdown {
+  min-width: 220px;
+  padding: 0.6rem !important;
+  border-radius: 16px !important;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(148, 163, 184, 0.18) !important;
+}
+
+.top-navbar-dropdown-item {
+  border-radius: 12px;
+  transition: all 0.22s ease;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.top-navbar-dropdown-item:hover,
+.top-navbar-dropdown-item:focus {
+  background: linear-gradient(
+    135deg,
+    rgba(45, 80, 22, 0.09),
+    rgba(74, 124, 42, 0.14)
+  );
+  color: #1f2937;
+  transform: translateX(2px);
+}
+
+.top-navbar-dropdown-item svg {
+  font-size: 1.05rem;
+}
+
+.top-navbar-logout-item {
+  border-radius: 12px;
+  transition: all 0.24s ease;
+  font-weight: 600;
+  color: #dc2626 !important;
+}
+
+.top-navbar-logout-item:hover,
+.top-navbar-logout-item:focus {
+  background: linear-gradient(
+    135deg,
+    rgba(220, 38, 38, 0.12),
+    rgba(239, 68, 68, 0.2)
+  );
+  color: #b91c1c !important;
+  transform: translateX(4px) scale(1.01);
+  box-shadow: 0 6px 18px rgba(220, 38, 38, 0.16);
+}
+
+.top-navbar-logout-item svg {
+  font-size: 1.1rem;
+}
+
+.top-navbar-logout-item:hover svg,
+.top-navbar-logout-item:focus svg {
+  transform: translateX(1px);
+}

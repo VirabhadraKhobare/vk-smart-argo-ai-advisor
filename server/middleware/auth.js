@@ -2,8 +2,8 @@
  * Authentication Middleware
  * Verifies JWT tokens and attaches user to request
  */
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
 const protect = async (req, res, next) => {
   let token;
@@ -11,56 +11,56 @@ const protect = async (req, res, next) => {
   // Check for token in Authorization header
   if (
     req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
+    req.headers.authorization.startsWith("Bearer")
   ) {
     try {
       // Extract token from header
-      token = req.headers.authorization.split(' ')[1];
+      token = req.headers.authorization.split(" ")[1];
 
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
       // Find user by id (exclude password)
-      req.user = await User.findById(decoded.id).select('-password');
+      req.user = await User.findById(decoded.id).select("-password");
 
       if (!req.user) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'User not found' 
+        return res.status(401).json({
+          success: false,
+          message: "User not found",
         });
       }
 
       if (!req.user.isActive) {
         return res.status(401).json({
           success: false,
-          message: 'Not authorized'
+          message: "Not authorized",
         });
       }
 
       return next();
     } catch (error) {
-      console.error('Auth middleware error:', error);
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Not authorized, token failed' 
+      console.error("Auth middleware error:", error);
+      return res.status(401).json({
+        success: false,
+        message: "Not authorized, token failed",
       });
     }
   }
 
-  return res.status(401).json({ 
-    success: false, 
-    message: 'Not authorized, no token' 
+  return res.status(401).json({
+    success: false,
+    message: "Not authorized, no token",
   });
 };
 
 // Admin middleware
 const adminOnly = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
+  if (req.user && req.user.role === "admin") {
     next();
   } else {
-    return res.status(403).json({ 
-      success: false, 
-      message: 'Not authorized as admin' 
+    return res.status(403).json({
+      success: false,
+      message: "Not authorized as admin",
     });
   }
 };
@@ -71,14 +71,14 @@ const authorize = (...roles) => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: 'Not authorized'
+        message: "Not authorized",
       });
     }
 
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: `Role ${req.user.role} is not authorized`
+        message: `Role ${req.user.role} is not authorized`,
       });
     }
     next();
