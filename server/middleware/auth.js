@@ -30,7 +30,14 @@ const protect = async (req, res, next) => {
         });
       }
 
-      next();
+      if (!req.user.isActive) {
+        return res.status(401).json({
+          success: false,
+          message: 'Not authorized'
+        });
+      }
+
+      return next();
     } catch (error) {
       console.error('Auth middleware error:', error);
       return res.status(401).json({ 
@@ -40,12 +47,10 @@ const protect = async (req, res, next) => {
     }
   }
 
-  if (!token) {
-    return res.status(401).json({ 
-      success: false, 
-      message: 'Not authorized, no token' 
-    });
-  }
+  return res.status(401).json({ 
+    success: false, 
+    message: 'Not authorized, no token' 
+  });
 };
 
 // Admin middleware
@@ -63,6 +68,13 @@ const adminOnly = (req, res, next) => {
 // Optional: Role-based access
 const authorize = (...roles) => {
   return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Not authorized'
+      });
+    }
+
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,

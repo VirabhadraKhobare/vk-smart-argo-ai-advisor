@@ -5,6 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
+const rateLimit = require('express-rate-limit');
 const { protect } = require('../middleware/auth');
 const {
   register,
@@ -28,9 +29,31 @@ const loginValidation = [
   body('password').notEmpty().withMessage('Password is required')
 ];
 
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many authentication attempts. Please try again later.'
+  }
+});
+
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many account creation attempts. Please try again later.'
+  }
+});
+
 // Public routes
-router.post('/register', registerValidation, register);
-router.post('/login', loginValidation, login);
+router.post('/register', registerLimiter, registerValidation, register);
+router.post('/login', authLimiter, loginValidation, login);
 
 // Protected routes
 router.get('/me', protect, getMe);
