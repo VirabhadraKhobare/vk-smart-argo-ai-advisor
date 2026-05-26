@@ -49,27 +49,45 @@ app.use(helmet({
 }));
 
 // CORS configuration - Production-safe whitelist approach
-const clientUrl = process.env.CLIENT_URL || '';
-const allowedOrigins = clientUrl
-  ? clientUrl.split(',').map(url => url.trim())
-  : [];
+const parseOriginList = (value = '') =>
+  value
+    .split(',')
+    .map(url => url.trim())
+    .filter(Boolean);
+
+const allowedOrigins = [
+  ...parseOriginList(process.env.CLIENT_URL),
+  ...parseOriginList(process.env.CORS_ORIGINS),
+];
+const uniqueAllowedOrigins = [...new Set(allowedOrigins)];
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
 const corsOptions = {
   origin: (origin, callback) => {
     // Allow non-browser requests (server-to-server)
     if (!origin) return callback(null, true);
-    
-    // In development or if no CLIENT_URL set, allow all
-    if (allowedOrigins.length === 0) {
-      console.log('⚠️  CORS: No CLIENT_URL configured. Allowing all origins (dev mode)');
+
+    // In development, always allow localhost-based frontends so local client ports work.
+    if (isDevelopment && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
       return callback(null, true);
     }
-    
+
+    // If no explicit origins are configured, allow all origins in development only.
+    if (uniqueAllowedOrigins.length === 0) {
+      if (isDevelopment) {
+        console.log('⚠️  CORS: No origin list configured. Allowing all origins (dev mode)');
+        return callback(null, true);
+      }
+
+      console.warn(`❌ CORS rejected origin: ${origin}`);
+      return callback(new Error('Not allowed by CORS'));
+    }
+
     // Check if origin is in whitelist
-    if (allowedOrigins.includes(origin)) {
+    if (uniqueAllowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    
+
     console.warn(`❌ CORS rejected origin: ${origin}`);
     callback(new Error('Not allowed by CORS'));
   },
@@ -161,7 +179,7 @@ const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
   console.log(`🌾 Smart Agro AI Advisor Server running on port ${PORT}`);
   console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔐 CORS whitelist: ${allowedOrigins.length > 0 ? JSON.stringify(allowedOrigins) : 'All origins (dev mode)'}`);
+  console.log(`🔐 CORS whitelist: ${uniqueAllowedOrigins.length > 0 ? JSON.stringify(uniqueAllowedOrigins) : 'All origins (dev mode)'}`);
 });
 
 // Handle unhandled promise rejections

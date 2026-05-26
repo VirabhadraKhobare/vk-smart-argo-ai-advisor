@@ -5,15 +5,18 @@
  */
 const ChatMessage = require('../models/ChatMessage');
 
-// Check if OpenAI is configured
-const useOpenAI = process.env.OPENAI_API_KEY;
+// Check if OpenAI is configured and try to load package safely
+let useOpenAI = !!process.env.OPENAI_API_KEY;
 let openai;
 
 if (useOpenAI) {
-  const { OpenAI } = require('openai');
-  openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-  });
+  try {
+    const { OpenAI } = require('openai');
+    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  } catch (err) {
+    console.warn('OpenAI client not available; falling back to local knowledge base.');
+    useOpenAI = false;
+  }
 }
 
 // AI Knowledge Base for farming queries (Enhanced)
